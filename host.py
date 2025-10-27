@@ -29,6 +29,7 @@ def handle_client(conn, addr):
 
 def start():
     server.listen()
+    print(f"Listening on {SERVER}")
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr))
@@ -36,4 +37,5 @@ def start():
         print(f"Connections: {threading.active_count()-1}")
 
 if __name__ == "__main__":
+    print("Server Starting")
     start()
