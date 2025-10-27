@@ -1,7 +1,7 @@
 import socket
 import threading
 
-HEADER = 64
+HEADER = 128
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
@@ -67,6 +67,9 @@ def handleInputs():
             cmds = [":help - List all commands",":peers - List all connections",":connect [host]:[port] - Connect to user | Parameters:\n   ip: IPV4 Address of desired connection\n   port: Port of desired connection",":active - Expose active users on your network"]
             for cmd in cmds:
                 print(cmd)
+        elif msg.startswith(":connect"):
+            split = msg.split(":")
+            connect(split[0].strip(),split[1].strip())
 
 if __name__ == "__main__":
     print("""Node Started. Type ":help" for a list of commands.""")
