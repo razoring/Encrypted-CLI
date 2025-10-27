@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 HEADER = 128
 PORT = 5050
@@ -15,9 +16,9 @@ def send(msg):
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' '*(HEADER-len(send_length))
     
-    for n in peers:
-        n.send(send_length)
-        n.send(message)
+    for peer in peers:
+        peer.send(send_length)
+        peer.send(message)
 
 def connect(host, port:int):
     addr = (host,port)
@@ -57,19 +58,24 @@ def initiate():
         conn, addr = server.accept()
         thread = threading.Thread(target=connection, args=(conn, addr))
         thread.start()
-        print(f"Connections: {threading.active_count()-1}")
+        print(f"Connections: {len(peers)}")
 
 def inputs():
     print("\n* Your chats are encrypted.")
     while True:
+        time.sleep(0.01)
         msg = input("> ")
-        if msg.startswith(":help"):
+        if msg == (":help"):
             cmds = [":help - List all commands",":peers - List all connections",":connect <host>:<port> - Connect to user | Parameters:\n   ip: IPV4 Address of desired connection\n   port: Port of desired connection",":active - Expose active users on your network"]
             for cmd in cmds:
                 print(cmd)
         elif msg.startswith(":connect"):
             split = msg.replace(":connect ","").split(":")
             connect(split[0].replace(" ","").strip(),int(split[1].replace(" ","").strip()))
+        elif msg == (":peers"):
+            print(f"* {len(peers)} Active Connections:")
+            for peer in peers:
+                print("    "+str(peer.getpeername()))
         else:
             send(msg)
 
