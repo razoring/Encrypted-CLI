@@ -94,6 +94,7 @@ class Nodenet():
 
         thread = threading.Thread(target=self._initiate)
         thread.start()
+        self._inputs()
     
     def close(self):
         print("* Network disconnected")
