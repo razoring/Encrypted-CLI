@@ -19,7 +19,7 @@ def send(msg):
     for peer in peers:
         peer.send(send_length)
         peer.send(message)
-        print(f"Sent to {peer}")
+        #print(f"Sent to {peer}")
 
 def connect(host, port:int):
     addr = (host,port)
@@ -37,7 +37,7 @@ def connection(conn, addr):
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
         if msg_length:
-            print(f"Recieved from {addr}")
+            #print(f"Recieved from {addr}")
             msg_length = int(msg_length)
             msg = conn.recv(msg_length).decode(FORMAT)
 
@@ -55,7 +55,6 @@ def initiate():
 
     server.listen()
     print(f"* Listening on {SERVER}:{PORT}")
-    inputs()
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=connection, args=(conn, addr))
@@ -85,3 +84,5 @@ if __name__ == "__main__":
     print("""* Node Started. Type ":help" for a list of commands.""")
     thread = threading.Thread(target=initiate)
     thread.start()
+
+    inputs()
