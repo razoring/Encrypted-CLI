@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "nodenet"
 version = "0.1.0"
 authors = [
-  { name="razoring", website="https://github.com/razoring" },
+  { name="razoring", email="raymondsosocials@gmail.com" },
 ]
 description = "Native RSA-256 encrypted P2P chat service using integrated network sockets interfaced securely through the CLI. No external imports needed."
 readme = "README.md"
