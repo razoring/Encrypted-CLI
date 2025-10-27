@@ -59,7 +59,6 @@ def initiate():
         conn, addr = server.accept()
         thread = threading.Thread(target=connection, args=(conn, addr))
         thread.start()
-        print(f"Connections: {len(peers)}")
 
 def inputs():
     print("\n* Your chats are encrypted.")
