@@ -1,61 +1,74 @@
 import socket
 import threading
 
-HEADER = 128
-PORT = 3090
+HEADER = 64
+PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
-FORMAT = "utf-8"
+FORMAT = 'utf-8'
 
-receipient = ""
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(ADDR)
-
-def incoming(conn, addr):
-    print(f"Connected to {addr}")
-    connected = True
-
-    while connected:
-        msgLength = conn.recv(HEADER).decode(HEADER)
-        if msgLength:
-            msgLength = int(msgLength)
-            msg = conn.recv(msgLength).decode(FORMAT)
-
-            if msg == f"{addr} Disconnected":
-                connected = False
-
-            print(f"{addr}: {msg}")
-
-    conn.close()
-
-def start():
-    server.listen()
-    print(f"Listening on {SERVER}")
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=incoming, args=(conn,addr))
-        thread.start()
-        print(f"Connections: {threading.active_count()-1}")
+peers = []
 
 def send(msg):
     message = msg.encode(FORMAT)
-    msgLength = len(message)
-    sendLength = str(msgLength).encode(FORMAT)
-    sendLength += b' '*(HEADER-len(sendLength))
-    receipient.send(sendLength)
-    receipient.send(message)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' '*(HEADER-len(send_length))
+    
+    for n in peers:
+        n.send(send_length)
+        n.send(message)
 
-def input():
-    print("\n Your chats are encrypted.")
+def connect(host, port):
+    addr = (host,port)
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(addr)
+    thread = threading.Thread(target=incoming, args=addr)
+    thread.start()
+
+def incoming(conn, addr):
+    print(f"Subcribed to : {addr}")
+
+    peers.append(conn)
+    connected = True
+
+    while connected:
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length).decode(FORMAT)
+
+            if msg == f"Disconnected from {addr}":
+                connected = False
+            
+            print(f"{addr}: {msg}")
+
+    peers.remove(conn)
+    conn.close()
+
+def initiate():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
+
+    server.listen()
+    print(f"Listening on {SERVER}:{PORT}")
+    handleInputs()
     while True:
-        msg:str = input("> ")
-        if ":help" in msg:
-            print(""":help - List all the functions\n""")
+        conn, addr = server.accept()
+        thread = threading.Thread(target=incoming, args=(conn, addr))
+        thread.start()
+        print(f"Connections: {threading.active_count()-1}")
 
+def handleInputs():
+    print("\nYour chats are encrypted.")
+    while True:
+        msg = input("> ")
+        if msg.startswith(":help"):
+            cmds = [":help - List all commands",":peers - List all connections",":connect [host]:[port] - Connect to user | Parameters:\n   ip: IPV4 Address of desired connection\n   port: Port of desired connection",":active - Expose active users on your network"]
+            for cmd in cmds:
+                print(cmd)
 
 if __name__ == "__main__":
-    print(f"Forwarding messages on {SERVER}")
-    print("""Type ":help" to list commands.""")
-    start()
-    input()
-    
+    print("""Node Started. Type ":help" for a list of commands.""")
+    thread = threading.Thread(target=initiate)
+    thread.start()
