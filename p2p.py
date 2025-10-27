@@ -27,7 +27,7 @@ def connect(host, port:int):
     thread.start()
 
 def connection(conn, addr):
-    print(f"Subcribed to {addr}")
+    print(f"* Subcribed to {addr}")
 
     peers.append(conn)
     connected = True
@@ -38,7 +38,7 @@ def connection(conn, addr):
             msg_length = int(msg_length)
             msg = conn.recv(msg_length).decode(FORMAT)
 
-            if msg == f"Disconnected from {addr}":
+            if msg == f"* Disconnected from {addr}":
                 connected = False
             
             print(f"{addr}: {msg}")
@@ -51,7 +51,7 @@ def initiate():
     server.bind(ADDR)
 
     server.listen()
-    print(f"Listening on {SERVER}:{PORT}")
+    print(f"* Listening on {SERVER}:{PORT}")
     inputs()
     while True:
         conn, addr = server.accept()
@@ -60,7 +60,7 @@ def initiate():
         print(f"Connections: {threading.active_count()-1}")
 
 def inputs():
-    print("\nYour chats are encrypted.")
+    print("\n* Your chats are encrypted.")
     while True:
         msg = input("> ")
         if msg.startswith(":help"):
@@ -74,6 +74,6 @@ def inputs():
             send(msg)
 
 if __name__ == "__main__":
-    print("""Node Started. Type ":help" for a list of commands.""")
+    print("""* Node Started. Type ":help" for a list of commands.""")
     thread = threading.Thread(target=initiate)
     thread.start()
