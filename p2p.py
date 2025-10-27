@@ -10,7 +10,7 @@ FORMAT = 'utf-8'
 
 peers = []
 
-def send(msg):
+def _send(msg):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -63,8 +63,8 @@ def initiate():
 def inputs():
     print("\n* Your chats are encrypted.")
     while True:
-        time.sleep(0.01)
-        msg = input("> ")
+        time.sleep(1/100)
+        msg = input("\n> ")
         if msg == (":help"):
             cmds = [":help - List all commands",":peers - List all connections",":connect <host>:<port> - Connect to user | Parameters:\n   ip: IPV4 Address of desired connection\n   port: Port of desired connection",":active - Expose active users on your network"]
             for cmd in cmds:
@@ -77,7 +77,7 @@ def inputs():
             for peer in peers:
                 print("    "+str(peer.getpeername()))
         else:
-            send(msg)
+            _send(msg)
 
 if __name__ == "__main__":
     print("""* Node Started. Type ":help" for a list of commands.""")
