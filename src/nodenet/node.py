@@ -5,6 +5,8 @@ import argparse
 import json
 import os
 
+import encryption
+
 class Nodenet():
     def __init__(self, host, port, nickname):
         self.HEADER_LEN = 512
@@ -141,7 +143,7 @@ def main():
     parser = argparse.ArgumentParser(description="Start a Nodenet Chat")
     parser.add_argument("--port", type=int, default=5050, help="Port to listen on. (default: 5050)")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="IPV4 Address to bind to. (default: 0.0.0.0)")
-    parser.add_argument("--nickname", type=str, required=True, help="Nickname of length <=10.")
+    parser.add_argument("--nickname", type=str, required=True, help="Nickname to display (required)")
     args = parser.parse_args()
     node = Nodenet(host=args.host, port=args.port, nickname=args.nickname)
     node.boot()
