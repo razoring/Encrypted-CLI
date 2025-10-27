@@ -12,7 +12,7 @@ class Nodenet():
         self.SERVER = host
         self.ADDR_FORMAT = (self.SERVER, self.PORT)
         self.FORMAT = "utf-8"
-        self.NICKNAME = nickname if len(nickname)<=10 else random.randint(1000000000,9999999999)
+        self.NICKNAME = nickname
 
         self.peers = []
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -104,7 +104,7 @@ def main():
     parser = argparse.ArgumentParser(description="Start a Nodenet Chat")
     parser.add_argument("--port", type=int, default=5050, help="Port to listen on. (default: 5050)")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="IPV4 Address to bind to. (default: 127.0.0.1)")
-    parser.add_argument("--nickname", type=str, default=random.randint(1000000000,9999999999), help="Nickname of length <=10. (default:random)")
+    parser.add_argument("--nickname", type=str, required=True, help="Nickname of length <=10. (default:random)")
     args = parser.parse_args()
     node = Nodenet(host=args.host,port=args.port,nickname=args.nickname)
     node.boot()
