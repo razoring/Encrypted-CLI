@@ -5,56 +5,6 @@ import argparse
 import json
 import os
 
-import random
-import math
-
-class RSA:
-    def __init__(self, min_prime_val=1000, max_prime_val=9999):
-        p = self._generate_prime(min_prime_val, max_prime_val)
-        q = self._generate_prime(min_prime_val, max_prime_val)
-
-        while p == q:
-            q = self._generate_prime(min_prime_val, max_prime_val)
-
-        self.modulus = p * q
-        phi = (p - 1) * (q - 1)
-
-        self.public_exponent = random.randint(3, phi - 1)
-        while math.gcd(self.public_exponent, phi) != 1:
-            self.public_exponent = random.randint(3, phi - 1)
-
-        self.private_exponent = self._mod_inverse(self.public_exponent, phi)
-
-    def _isPrime(self, n):
-        if n < 2:
-            return False
-        for i in range(2, int(math.sqrt(n)) + 1):
-            if n % i == 0:
-                return False
-        return True
-
-    def _generatePrime(self, min_val, max_val):
-        prime_candidate = random.randint(min_val, max_val)
-        while not self._is_prime(prime_candidate):
-            prime_candidate = random.randint(min_val, max_val)
-        return prime_candidate
-
-    def _modInverse(self, e, phi):
-        for d in range(3, phi):
-            if (d * e) % phi == 1:
-                return d
-        raise ValueError("Modular inverse does not exist")
-
-    def encrypt(self, plaintext):
-        encoded_chars = [ord(char) for char in plaintext]
-        ciphertext = [pow(char, self.public_exponent, self.modulus) for char in encoded_chars]
-        return ciphertext
-
-    def decrypt(self, ciphertext):
-        decoded_chars = [pow(char, self.private_exponent, self.modulus) for char in ciphertext]
-        plaintext = "".join(chr(char) for char in decoded_chars)
-        return plaintext
-
 class Nodenet():
     def __init__(self, host, port, nickname):
         self.HEADER_LEN = 512
@@ -64,31 +14,10 @@ class Nodenet():
         self.FORMAT = "utf-8"
         self.NICKNAME = nickname
 
-        self.private_key, self.public_key = RSA().generate_keys()
-        self.public_key_pem = RSA().serialize_public_key(self.public_key)
-
         self.peers_lock = threading.Lock()
         self.peers = []
-        self.peer_keys = {}
-
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.ADDR_FORMAT)
-
-    def _exchange(self, conn):
-        try:
-            conn.send(self.public_key_pem)
-            peer_key_pem = conn.recv(1024)
-            if not peer_key_pem:
-                return False
-            
-            peer_public_key = RSA().deserialize_public_key(peer_key_pem)
-            with self.peers_lock:
-                self.peer_keys[conn] = peer_public_key
-            
-            return True
-        except Exception as e:
-            print(f"* Key exchange failed: {e}")
-            return False
 
     def _initiate(self):
         self.server.listen()
@@ -104,13 +33,8 @@ class Nodenet():
                 break
 
     def _connections(self, conn, addr):
-        if not self._exchange(conn):
-            print(f"* Failed to establish secure connection with {addr}. Closing.")
-            conn.close()
-            return
-            
-        print(f"* Securely subscribed to {addr}")
-        
+        print(f"* Subscribed to {addr}")
+
         with self.peers_lock:
             self.peers.append(conn)
         
@@ -125,22 +49,16 @@ class Nodenet():
                 header_data = json.loads(header.decode(self.FORMAT).strip())
                 length = int(header_data["length"])
                 nickname = header_data["nickname"]
-                
-                ciphertext = conn.recv(length)
-                
-                msg = RSA().decrypt(ciphertext, self.private_key).decode(self.FORMAT)
+                msg = conn.recv(length).decode(self.FORMAT)
 
                 print(f"\n[{nickname}]: {msg}\n> ", end="")
 
             except (ConnectionResetError, json.JSONDecodeError, ValueError, OSError):
                 connected = False
 
-        print(f"* {addr} disconnected.")
         with self.peers_lock:
             if conn in self.peers:
                 self.peers.remove(conn)
-            if conn in self.peer_keys:
-                del self.peer_keys[conn]
         conn.close()
 
     def connect(self, host, port: int):
@@ -157,32 +75,24 @@ class Nodenet():
 
     def _send(self, msg):
         message = msg.encode(self.FORMAT)
+        sendLen = json.dumps({
+            "nickname": self.NICKNAME,
+            "length": len(message)
+        }).encode(self.FORMAT)
+        
+        header = sendLen + b' ' * (self.HEADER_LEN - len(sendLen))
 
         with self.peers_lock:
             for peer in list(self.peers):
                 try:
-                    peer_public_key = self.peer_keys.get(peer)
-                    if not peer_public_key:
-                        continue
-                    
-                    encrypted_message = RSA.encrypt(message, peer_public_key)
-
-                    sendLen = json.dumps({
-                        "nickname": self.NICKNAME,
-                        "length": len(encrypted_message)
-                    }).encode(self.FORMAT)
-                    
-                    header = sendLen + b' ' * (self.HEADER_LEN - len(sendLen))
-                    
                     peer.send(header)
-                    peer.send(encrypted_message)
+                    peer.send(message)
                 except socket.error:
                     self.peers.remove(peer)
-                    if peer in self.peer_keys:
-                        del self.peer_keys[peer]
 
     def _inputs(self):
         print("\n* Your chats are encrypted.")
+
         while True:
             time.sleep(1/100)
             msg = input("> ")
