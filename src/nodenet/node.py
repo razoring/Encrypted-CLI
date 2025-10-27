@@ -5,6 +5,9 @@ import argparse
 import json
 import os
 
+class RSA():
+    
+
 class Nodenet():
     def __init__(self, host, port, nickname):
         self.HEADER_LEN = 512

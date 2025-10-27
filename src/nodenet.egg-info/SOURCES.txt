@@ -2,7 +2,6 @@ LICENSE
 README.md
 pyproject.toml
 src/nodenet/__init__.py
-src/nodenet/encryption.py
 src/nodenet/node.py
 src/nodenet.egg-info/PKG-INFO
 src/nodenet.egg-info/SOURCES.txt
