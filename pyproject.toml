@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [
   { name="razoring", email="raymondsosocials@gmail.com" },
 ]
-description = "Native RSA-256 encrypted P2P chat service using integrated network sockets interfaced securely through the CLI. No external imports needed."
+description = "Encrypted P2P chat service using integrated network sockets interfaced securely through the CLI. No external imports needed."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -19,3 +19,6 @@ classifiers = [
 
 [project.scripts]
 nodenet = "nodenet.node:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]  # Look for packages in the 'src' directory
