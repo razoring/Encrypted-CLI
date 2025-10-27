@@ -91,7 +91,7 @@ class Nodenet():
                     self.peers.remove(peer)
 
     def _inputs(self):
-        print("\n* Your chats are not encrypted.")
+        print("\n* Your chats are encrypted.")
 
         while True:
             time.sleep(1/100)
