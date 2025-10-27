@@ -10,11 +10,11 @@ import math
 
 class RSA:
     def __init__(self, min_prime_val=1000, max_prime_val=9999):
-        p = self._generate_prime(min_prime_val, max_prime_val)
-        q = self._generate_prime(min_prime_val, max_prime_val)
+        p = self._prime(min_prime_val, max_prime_val)
+        q = self._prime(min_prime_val, max_prime_val)
 
         while p == q:
-            q = self._generate_prime(min_prime_val, max_prime_val)
+            q = self._prime(min_prime_val, max_prime_val)
 
         self.modulus = p * q
         phi = (p - 1) * (q - 1)
@@ -23,9 +23,9 @@ class RSA:
         while math.gcd(self.public_exponent, phi) != 1:
             self.public_exponent = random.randint(3, phi - 1)
 
-        self.private_exponent = self._mod_inverse(self.public_exponent, phi)
+        self.private_exponent = self._modInverse(self.public_exponent, phi)
 
-    def _is_prime(self, n):
+    def _isPrime(self, n):
         if n < 2:
             return False
         for i in range(2, int(math.sqrt(n)) + 1):
@@ -33,13 +33,13 @@ class RSA:
                 return False
         return True
 
-    def _generate_prime(self, min_val, max_val):
+    def _prime(self, min_val, max_val):
         prime_candidate = random.randint(min_val, max_val)
-        while not self._is_prime(prime_candidate):
+        while not self._isPrime(prime_candidate):
             prime_candidate = random.randint(min_val, max_val)
         return prime_candidate
 
-    def _mod_inverse(self, e, phi):
+    def _modInverse(self, e, phi):
         for d in range(3, phi):
             if (d * e) % phi == 1:
                 return d
