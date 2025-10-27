@@ -25,7 +25,7 @@ class RSA:
 
         self.private_exponent = self._mod_inverse(self.public_exponent, phi)
 
-    def _is_prime(self, n):
+    def _isPrime(self, n):
         if n < 2:
             return False
         for i in range(2, int(math.sqrt(n)) + 1):
@@ -33,13 +33,13 @@ class RSA:
                 return False
         return True
 
-    def _generate_prime(self, min_val, max_val):
+    def _generatePrime(self, min_val, max_val):
         prime_candidate = random.randint(min_val, max_val)
         while not self._is_prime(prime_candidate):
             prime_candidate = random.randint(min_val, max_val)
         return prime_candidate
 
-    def _mod_inverse(self, e, phi):
+    def _modInverse(self, e, phi):
         for d in range(3, phi):
             if (d * e) % phi == 1:
                 return d
@@ -64,8 +64,8 @@ class Nodenet():
         self.FORMAT = "utf-8"
         self.NICKNAME = nickname
 
-        self.private_key, self.public_key = encryption.generate_keys()
-        self.public_key_pem = encryption.serialize_public_key(self.public_key)
+        self.private_key, self.public_key = RSA().generate_keys()
+        self.public_key_pem = RSA().serialize_public_key(self.public_key)
 
         self.peers_lock = threading.Lock()
         self.peers = []
@@ -74,14 +74,14 @@ class Nodenet():
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.ADDR_FORMAT)
 
-    def _key_exchange(self, conn):
+    def _exchange(self, conn):
         try:
             conn.send(self.public_key_pem)
             peer_key_pem = conn.recv(1024)
             if not peer_key_pem:
                 return False
             
-            peer_public_key = encryption.deserialize_public_key(peer_key_pem)
+            peer_public_key = RSA().deserialize_public_key(peer_key_pem)
             with self.peers_lock:
                 self.peer_keys[conn] = peer_public_key
             
@@ -104,7 +104,7 @@ class Nodenet():
                 break
 
     def _connections(self, conn, addr):
-        if not self._key_exchange(conn):
+        if not self._exchange(conn):
             print(f"* Failed to establish secure connection with {addr}. Closing.")
             conn.close()
             return
@@ -128,7 +128,7 @@ class Nodenet():
                 
                 ciphertext = conn.recv(length)
                 
-                msg = encryption.decrypt(ciphertext, self.private_key).decode(self.FORMAT)
+                msg = RSA().decrypt(ciphertext, self.private_key).decode(self.FORMAT)
 
                 print(f"\n[{nickname}]: {msg}\n> ", end="")
 
@@ -165,7 +165,7 @@ class Nodenet():
                     if not peer_public_key:
                         continue
                     
-                    encrypted_message = encryption.encrypt(message, peer_public_key)
+                    encrypted_message = RSA.encrypt(message, peer_public_key)
 
                     sendLen = json.dumps({
                         "nickname": self.NICKNAME,
