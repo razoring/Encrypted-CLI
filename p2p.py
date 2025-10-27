@@ -19,6 +19,7 @@ def send(msg):
     for peer in peers:
         peer.send(send_length)
         peer.send(message)
+        print(f"Sent to {peer}")
 
 def connect(host, port:int):
     addr = (host,port)
@@ -36,6 +37,7 @@ def connection(conn, addr):
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
         if msg_length:
+            print(f"Recieved from {addr}")
             msg_length = int(msg_length)
             msg = conn.recv(msg_length).decode(FORMAT)
 
