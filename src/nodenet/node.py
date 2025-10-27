@@ -16,10 +16,31 @@ class Nodenet():
         self.FORMAT = "utf-8"
         self.NICKNAME = nickname
 
+        self.private_key, self.public_key = encryption.generate_keys()
+        self.public_key_pem = encryption.serialize_public_key(self.public_key)
+
         self.peers_lock = threading.Lock()
         self.peers = []
+        self.peer_keys = {}
+
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.ADDR_FORMAT)
+
+    def _key_exchange(self, conn):
+        try:
+            conn.send(self.public_key_pem)
+            peer_key_pem = conn.recv(1024)
+            if not peer_key_pem:
+                return False
+            
+            peer_public_key = encryption.deserialize_public_key(peer_key_pem)
+            with self.peers_lock:
+                self.peer_keys[conn] = peer_public_key
+            
+            return True
+        except Exception as e:
+            print(f"* Key exchange failed: {e}")
+            return False
 
     def _initiate(self):
         self.server.listen()
@@ -35,8 +56,13 @@ class Nodenet():
                 break
 
     def _connections(self, conn, addr):
-        print(f"* Subscribed to {addr}")
-
+        if not self._key_exchange(conn):
+            print(f"* Failed to establish secure connection with {addr}. Closing.")
+            conn.close()
+            return
+            
+        print(f"* Securely subscribed to {addr}")
+        
         with self.peers_lock:
             self.peers.append(conn)
         
@@ -51,16 +77,22 @@ class Nodenet():
                 header_data = json.loads(header.decode(self.FORMAT).strip())
                 length = int(header_data["length"])
                 nickname = header_data["nickname"]
-                msg = conn.recv(length).decode(self.FORMAT)
+                
+                ciphertext = conn.recv(length)
+                
+                msg = encryption.decrypt(ciphertext, self.private_key).decode(self.FORMAT)
 
                 print(f"\n[{nickname}]: {msg}\n> ", end="")
 
             except (ConnectionResetError, json.JSONDecodeError, ValueError, OSError):
                 connected = False
 
+        print(f"* {addr} disconnected.")
         with self.peers_lock:
             if conn in self.peers:
                 self.peers.remove(conn)
+            if conn in self.peer_keys:
+                del self.peer_keys[conn]
         conn.close()
 
     def connect(self, host, port: int):
@@ -77,24 +109,32 @@ class Nodenet():
 
     def _send(self, msg):
         message = msg.encode(self.FORMAT)
-        sendLen = json.dumps({
-            "nickname": self.NICKNAME,
-            "length": len(message)
-        }).encode(self.FORMAT)
-        
-        header = sendLen + b' ' * (self.HEADER_LEN - len(sendLen))
 
         with self.peers_lock:
             for peer in list(self.peers):
                 try:
+                    peer_public_key = self.peer_keys.get(peer)
+                    if not peer_public_key:
+                        continue
+                    
+                    encrypted_message = encryption.encrypt(message, peer_public_key)
+
+                    sendLen = json.dumps({
+                        "nickname": self.NICKNAME,
+                        "length": len(encrypted_message)
+                    }).encode(self.FORMAT)
+                    
+                    header = sendLen + b' ' * (self.HEADER_LEN - len(sendLen))
+                    
                     peer.send(header)
-                    peer.send(message)
+                    peer.send(encrypted_message)
                 except socket.error:
                     self.peers.remove(peer)
+                    if peer in self.peer_keys:
+                        del self.peer_keys[peer]
 
     def _inputs(self):
         print("\n* Your chats are encrypted.")
-
         while True:
             time.sleep(1/100)
             msg = input("> ")

@@ -1,48 +1,50 @@
 import random
 import math
+import hashlib
 
-def isPrime(n):
-    if n < 2:
-        return False
-    for i in range(2, n//2+1):
-        if n % i == 0:
+class RSA:
+    def __init__(self, min_prime_val=1000, max_prime_val=9999):
+        p = self._generate_prime(min_prime_val, max_prime_val)
+        q = self._generate_prime(min_prime_val, max_prime_val)
+
+        while p == q:
+            q = self._generate_prime(min_prime_val, max_prime_val)
+
+        self.modulus = p * q
+        phi = (p - 1) * (q - 1)
+
+        self.public_exponent = random.randint(3, phi - 1)
+        while math.gcd(self.public_exponent, phi) != 1:
+            self.public_exponent = random.randint(3, phi - 1)
+
+        self.private_exponent = self._mod_inverse(self.public_exponent, phi)
+
+    def _is_prime(self, n):
+        if n < 2:
             return False
-    return True
+        for i in range(2, int(math.sqrt(n)) + 1):
+            if n % i == 0:
+                return False
+        return True
 
-def prime(min,max):
-    prime = random.randint(min,max)
-    while not isPrime(prime):
-        prime = random.randint(min,max)
-    return prime
+    def _generate_prime(self, min_val, max_val):
+        prime_candidate = random.randint(min_val, max_val)
+        while not self._is_prime(prime_candidate):
+            prime_candidate = random.randint(min_val, max_val)
+        return prime_candidate
 
-def modInverse(e,phi):
-    for d in range(3, phi):
-        if (d*e)%phi == 1:
-            return d
-    raise ValueError("Mod-Inverse does not exist")
+    def _mod_inverse(self, e, phi):
+        for d in range(3, phi):
+            if (d * e) % phi == 1:
+                return d
+        raise ValueError("Modular inverse does not exist")
 
-p, q = prime(1000,5000), prime(1000,5000)
+    def encrypt(self, plaintext):
+        encoded_chars = [ord(char) for char in plaintext]
+        ciphertext = [pow(char, self.public_exponent, self.modulus) for char in encoded_chars]
+        return ciphertext
 
-while p == q:
-    q = prime(1000,5000)
-
-n = p*q
-phi_n = (p-1)*(q-1)
-
-e = random.randint(3,phi_n-1)
-
-while math.gcd(e, phi_n) != 1:
-    e = random.randint(3,phi_n-1)
-
-d = modInverse(e, phi_n)
-
-print(e, d, n, phi_n, p, q)
-
-msg = "Hello World"
-encoded = [ord(c) for c in msg]
-cipher = [pow(c, e, n) for c in encoded]
-
-print(cipher)
-
-encoded = [pow(c, d, n) for c in cipher]
-msg = "".join(chr(c) for c in encoded)
+    def decrypt(self, ciphertext):
+        decoded_chars = [pow(char, self.private_exponent, self.modulus) for char in ciphertext]
+        plaintext = "".join(chr(char) for char in decoded_chars)
+        return plaintext
