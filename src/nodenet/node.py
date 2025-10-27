@@ -6,10 +6,10 @@ import json
 import random
 
 class Nodenet():
-    def __init__(self, port, server, nickname):
+    def __init__(self, host, port, nickname):
         self.HEADER_LEN = 512
         self.PORT = port
-        self.SERVER = server
+        self.SERVER = host
         self.ADDR_FORMAT = (self.SERVER, self.PORT)
         self.FORMAT = "utf-8"
         self.NICKNAME = nickname if len(nickname)<=10 else random.randint(1000000000,9999999999)
