@@ -52,14 +52,14 @@ def initiate():
 
     server.listen()
     print(f"Listening on {SERVER}:{PORT}")
-    handleInputs()
+    inputs()
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=incoming, args=(conn, addr))
         thread.start()
         print(f"Connections: {threading.active_count()-1}")
 
-def handleInputs():
+def inputs():
     print("\nYour chats are encrypted.")
     while True:
         msg = input("> ")
