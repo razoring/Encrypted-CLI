@@ -23,11 +23,11 @@ def connect(host, port:int):
     addr = (host,port)
     peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     peer.connect(addr)
-    thread = threading.Thread(target=incoming, args=(peer, addr))
+    thread = threading.Thread(target=connection, args=(peer, addr))
     thread.start()
 
-def incoming(conn, addr):
-    print(f"Subcribed to : {addr}")
+def connection(conn, addr):
+    print(f"Subcribed to {addr}")
 
     peers.append(conn)
     connected = True
@@ -55,7 +55,7 @@ def initiate():
     inputs()
     while True:
         conn, addr = server.accept()
-        thread = threading.Thread(target=incoming, args=(conn, addr))
+        thread = threading.Thread(target=connection, args=(conn, addr))
         thread.start()
         print(f"Connections: {threading.active_count()-1}")
 
@@ -70,6 +70,8 @@ def inputs():
         elif msg.startswith(":connect"):
             split = msg.replace(":connect ","").split(":")
             connect(split[0].replace(" ","").strip(),int(split[1].replace(" ","").strip()))
+        else:
+            send(msg)
 
 if __name__ == "__main__":
     print("""Node Started. Type ":help" for a list of commands.""")
