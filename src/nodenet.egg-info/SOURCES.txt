@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+src/nodenet/__init__.py
+src/nodenet/node.py
+src/nodenet.egg-info/PKG-INFO
+src/nodenet.egg-info/SOURCES.txt
+src/nodenet.egg-info/dependency_links.txt
+src/nodenet.egg-info/entry_points.txt
+src/nodenet.egg-info/top_level.txt
