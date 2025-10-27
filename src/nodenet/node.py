@@ -24,7 +24,7 @@ class Nodenet():
 
         while True:
             conn, addr = self.server.accept()
-            handler = threading.Thread(target=self._connections, args=(conn,addr))
+            handler = threading.Thread(target=self._connections, args=(conn,addr,self.NICKNAME))
             handler.start()
 
     def _connections(self, conn, addr, nickname):
@@ -75,7 +75,7 @@ class Nodenet():
             msg = input("\n> ")
 
             if msg == ":help":
-                cmds = [":help - List all commands",":peers - List all connections",":connect <host>:<port> - Connect to user | Parameters:\n   ip: IPV4 Address of desired connection\n   port: Port of desired connection",":active - Expose active users on your network"]
+                cmds = [":help - List all commands",":peers - List all connections",":connect <host>:<port> - Connect to user | Parameters:\n   ip: IPV4 Address of desired connection\n   port: Port of desired connection",":close - Disconnect from network"]
                 for cmd in cmds:
                     print(cmd)
             elif msg.startswith(":connect"):
@@ -85,6 +85,9 @@ class Nodenet():
                 print(f"* {len(self.peers)} Active Connections:")
                 for peer in self.peers:
                     print("    "+str(peer.getpeername()))
+            elif msg == (":close"):
+                self._send(f"* Disconnected from {self.NICKNAME}")
+                self.close()
             else:
                 self._send(msg)
 
