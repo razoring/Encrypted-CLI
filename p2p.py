@@ -19,11 +19,11 @@ def send(msg):
         n.send(send_length)
         n.send(message)
 
-def connect(host, port):
+def connect(host, port:int):
     addr = (host,port)
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(addr)
-    thread = threading.Thread(target=incoming, args=addr)
+    peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    peer.connect(addr)
+    thread = threading.Thread(target=incoming, args=(peer, addr))
     thread.start()
 
 def incoming(conn, addr):
