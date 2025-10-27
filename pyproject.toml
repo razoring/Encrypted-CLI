@@ -1,0 +1,21 @@
+[build system]
+requires = ["setup-tools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Nodenet"
+version = "0.1.0"
+authors = [
+    {name="razoring", website="https://github.com/razoring"},
+]
+description = "Native RSA-256 encrypted P2P chat service using integrated network sockets interfaced securely through the CLI. No external imports needed."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3"
+    "License :: OSI Approved :: GPL License",
+    "Operating System :: OS Independent"
+]
+
+[project.scripts]
+nodenet = "Encrypted-CLI.node:main"
