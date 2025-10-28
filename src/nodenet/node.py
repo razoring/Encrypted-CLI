@@ -9,7 +9,7 @@ import random
 import math
 
 class encryption():
-    def __init__(self, min=1000, max=16921):
+    def __init__(self, min=1000, max=16000):
         self.MIN = min
         self.MAX = max
         self.privateKey = 0
