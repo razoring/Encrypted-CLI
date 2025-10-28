@@ -9,89 +9,58 @@ import random
 import math
 
 class encryption():
-    def __init__(self, min=10000, max=99999):
+    def __init__(self, min=1000, max=9999):
         self.MIN = min
         self.MAX = max
         self.privateKey = 0
         self.publicKey = 0
+
         self.modulus = 0
 
-    #highly efficient Miller-Rabin primality test
-    def _is_probably_prime(self, n, k=5):
-        """Miller-Rabin primality test."""
-        if n < 2: return False
-        if n == 2 or n == 3: return True
-        if n % 2 == 0: return False
+    def _generatePrime(self):
+        prime = random.randint(self.MIN,self.MAX)
+        while not self._isPrime(prime):
+            prime = random.randint(self.MIN,self.MAX)
+        return prime
 
-        r, d = 0, n - 1
-        while d % 2 == 0:
-            r += 1
-            d //= 2
-
-        for _ in range(k):
-            a = random.randrange(2, n - 1)
-            x = pow(a, d, n)
-            if x == 1 or x == n - 1:
-                continue
-            for _ in range(r - 1):
-                x = pow(x, 2, n)
-                if x == n - 1:
-                    break
-            else:
+    def _isPrime(self, n):
+        if n < 2:
+            return False
+        for i in range(2, n//2+1):
+            if n%i == 0:
                 return False
         return True
-
-    def _generatePrime(self):
-        """Generate a prime using the Miller-Rabin test."""
-        while True:
-            prime_candidate = random.randrange(self.MIN, self.MAX)
-            if prime_candidate % 2 == 0:
-                continue
-            if self._is_probably_prime(prime_candidate):
-                return prime_candidate
-
-    #highly efficient Extended Euclidean Algorithm for modular inverse.
-    def _extended_gcd(self, a, b):
-        """Extended Euclidean Algorithm to find the modular inverse."""
-        if a == 0:
-            return b, 0, 1
-        d, x1, y1 = self._extended_gcd(b % a, a)
-        x = y1 - (b // a) * x1
-        y = x1
-        return d, x, y
-
+    
     def _inverseMod(self, e, phi):
-        """Calculate modular inverse using the Extended Euclidean Algorithm."""
-        d, x, y = self._extended_gcd(e, phi)
-        if d != 1:
-            raise ValueError("Modular inverse does not exist")
-        return x % phi
-
+        for d in range(3, phi):
+            if (d*e)%phi == 1:
+                return d
+        raise ValueError("Mod-inverse does not exist")
+    
     def generateKeyPair(self):
-        p = self._generatePrime()
-        q = self._generatePrime()
+        p = q = self._generatePrime()
         while p == q:
             q = self._generatePrime()
+        phi_N = (p-1)*(q-1)
 
-        self.modulus = p * q
-        phi_N = (p - 1) * (q - 1)
+        self.modulus = p*q
 
-        self.publicKey = random.randint(3, phi_N - 1)
+        self.publicKey = random.randint(3, phi_N-1)
         while math.gcd(self.publicKey, phi_N) != 1:
-            self.publicKey = random.randint(3, phi_N - 1)
+            self.publicKey = random.randint(3, phi_N-1)
         
         self.privateKey = self._inverseMod(self.publicKey, phi_N)
 
-        return self.publicKey, self.publicKey
-
+        return self.publicKey, self.privateKey
+    
     def encrypt(self, msg, publicKey, modulus):
-        ascii_chars = [ord(char) for char in msg]
-        cipher = [pow(char, publicKey, modulus) for char in ascii_chars]
+        ascii = [ord(char) for char in msg]
+        cipher = [pow(char, publicKey, modulus) for char in ascii]
         return cipher
 
     def decrypt(self, cipher, privateKey):
-        ascii_chars = [pow(char, privateKey, self.modulus) for char in cipher]
-        msg = "".join(chr(char) for char in ascii_chars)
+        ascii = [pow(char, privateKey, self.modulus) for char in cipher]
+        msg = "".join(chr(char) for char in ascii)
         return msg
 
 class Nodenet():
