@@ -1,10 +1,14 @@
-# Nodenet
-A **peer-to-peer** chat service secured with **end-to-end RSA encryption** that runs in your CLI.
+# Nodenet: Privacy made simple
+A **peer-to-peer** chat service secured with **end-to-end RSA encryption** that runs in your CLI. Chat individually or in groups with unlimited connections.
 
+## Chat Securely
+When a connection is established, a public and private key are generated and the public keys are exchanged by each connection. a Encryption is secured by the client using a unique public key and decryption is handled by the receipient using their unique private key. Keys are randomly generated integers between **1000 to 99 999** — which is **98 000** unique possible keys.
+
+#### Chats do not save.
 # Getting Started
 ## Installation
 ```
-pip install nodenet
+pip install nodenetwork
 ```
 ## Initialization
 ```
