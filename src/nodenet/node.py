@@ -105,9 +105,7 @@ class Nodenet():
 
     def _initiate(self):
         self.publicKey, self.privateKey = self.encrypt.generateKeyPair()
-
         self.server.listen()
-        print(f"* Listening on {self.SERVER}:{self.PORT}")
 
         while True:
             try:
@@ -167,19 +165,17 @@ class Nodenet():
         for peer, keys in self.peers.items():
             try:
                 message = self.encrypt.encrypt(msg, keys["key"], keys["modulus"])
+                msgJson = json.dumps(message).encode(self.FORMAT)
+
                 headerData = json.dumps({
                     "nickname": self.NICKNAME,
-                    "length": len(message)
+                    "length": len(msgJson)
                 }).encode(self.FORMAT)
                 
                 header = headerData + b' ' * (self.HEADER_LEN - len(headerData))
 
-                for peer in list(self.peers):
-                    try:
-                        peer.send(header)
-                        peer.send(message)
-                    except socket.error:
-                        self.peers.remove(peer)
+                peer.send(header)
+                peer.send(msgJson)
             except (socket.error, KeyError):
                 if peer in self.peers:
                     del self.peers[peer]
