@@ -53,13 +53,13 @@ class encryption():
 
         return self.publicKey, self.privateKey
     
-    def encrypt(self, msg, publicKey):
+    def encrypt(self, msg, publicKey, modulus):
         ascii = [ord(char) for char in msg]
-        cipher = [pow(char, publicKey, self.n) for char in ascii]
+        cipher = [pow(char, publicKey, modulus) for char in ascii]
         return cipher
 
-    def decrypt(self, cipher, privateKey):
-        ascii = [pow(char, privateKey, self.n) for char in cipher]
+    def decrypt(self, cipher, privateKey, modulus):
+        ascii = [pow(char, privateKey, modulus) for char in cipher]
         msg = "".join(chr(char) for char in ascii)
         return msg
 
@@ -187,7 +187,7 @@ class Nodenet():
     def _inputs(self):
         while True:
             time.sleep(1/100)
-            msg = input("> ")
+            msg = input("\n> ")
             if not msg:
                 continue
 
