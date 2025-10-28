@@ -190,7 +190,7 @@ class Nodenet():
             if msg == ":help":
                 cmds = [":help - List all commands",":peers - List all connections",":connect <host>:<port> - Connect to user",":close - Disconnect from network"]
                 for cmd in cmds:
-                    print(cmd)
+                    print("    "+str(cmd))
             elif msg.startswith(":connect"):
                 try:
                     split = msg.replace(":connect ", "").split(":")
