@@ -15,7 +15,7 @@ class encryption():
         self.privateKey = 0
         self.publicKey = 0
 
-        self.n = 0
+        self.modulus = 0
 
     def _generatePrime(self):
         prime = random.randint(self.MIN,self.MAX)
@@ -43,7 +43,7 @@ class encryption():
             q = self._generatePrime()
         phi_N = (p-1)*(q-1)
 
-        self.n = p*q
+        self.modulus = p*q
 
         self.publicKey = random.randint(3, phi_N-1)
         while math.gcd(self.publicKey, phi_N) != 1:
@@ -65,7 +65,7 @@ class encryption():
 
 class Nodenet():
     def __init__(self, host, port, nickname):
-        self.HEADER_LEN = 512
+        self.HEADER_LEN = 1024
         self.PORT = port
         self.SERVER = host
         self.ADDR_FORMAT = (self.SERVER, self.PORT)
@@ -76,9 +76,32 @@ class Nodenet():
         self.privateKey = 0
         self.encrypt = encryption()
 
-        self.peers = {}
+        self.peers = {} # {conn: {"key":public_key,"modulus":modulus}}
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(self.ADDR_FORMAT)
+
+    def _keyHandshake(self, conn):
+        try:
+            payload = {
+                "key": self.publicKey,
+                "modulus": self.encrypt.modulus
+            }
+            conn.send(json.dumps(payload).encode(self.FORMAT))
+
+            peerJson = conn.recv(self.HEADER_LEN).decode(self.FORMAT)
+            peerPayload = json.loads(peerJson)
+
+            self.peers[conn] = {
+                "key": peerPayload["key"],
+                "modulus": peerPayload["modulus"]
+            }
+            print(f"* Secure handshake with {conn.getpeername()} successful")
+            print("\n* Your chats are encrypted.")
+            
+            return True
+        except (json.JSONDecodeError, OSError, KeyError):
+            print(f"* Secure handshake failed with {conn.getpeername()}")
+            return False
 
     def _initiate(self):
         self.publicKey, self.privateKey = self.encrypt.generateKeyPair()
@@ -96,11 +119,14 @@ class Nodenet():
                 break
 
     def _connections(self, conn, addr):
+        if not self._keyHandshake(conn):
+            conn.close()
+            return
+
         print(f"* Subscribed to {addr}")
 
-        connected = True
-
         #recieving
+        connected = True
         while connected:
             try:
                 header = conn.recv(self.HEADER_LEN)
@@ -111,12 +137,10 @@ class Nodenet():
                 header_data = json.loads(header.decode(self.FORMAT).strip())
                 length = int(header_data["length"])
                 nickname = header_data["nickname"]
-                key = header_data["key"]
 
-                if not conn in self.peers:
-                    self.peers = self.peers.update({conn:key})
-
-                msg = self.encrypt.decrypt(conn.recv(length).decode(self.FORMAT), self.privateKey)
+                cipherJson = conn.recv(length).decode(self.FORMAT)
+                cipher = json.loads(cipherJson)
+                msg = self.encrypt.decrypt(cipher, self.privateKey)
 
                 print(f"\n[{nickname}]: {msg}\n> ", end="")
 
@@ -139,26 +163,28 @@ class Nodenet():
         except (ConnectionRefusedError, socket.gaierror, TimeoutError):
             print(f"* Failed to connect to {host}:{port}")
 
-    def _send(self, msg, key):
-        message = self.encrypt.encrypt(msg.encode(self.FORMAT))
-        sendLen = json.dumps({
-            "nickname": self.NICKNAME,
-            "length": len(message),
-            "key": self.publicKey
-        }).encode(self.FORMAT)
-        
-        header = sendLen + b' ' * (self.HEADER_LEN - len(sendLen))
-
-        for peer in list(self.peers):
+    def _send(self, msg):
+        for peer, keys in self.peers.items():
             try:
-                peer.send(header)
-                peer.send(message)
-            except socket.error:
-                self.peers.remove(peer)
+                message = self.encrypt.encrypt(msg, keys["key"], keys["modulus"])
+                headerData = json.dumps({
+                    "nickname": self.NICKNAME,
+                    "length": len(message)
+                }).encode(self.FORMAT)
+                
+                header = headerData + b' ' * (self.HEADER_LEN - len(headerData))
+
+                for peer in list(self.peers):
+                    try:
+                        peer.send(header)
+                        peer.send(message)
+                    except socket.error:
+                        self.peers.remove(peer)
+            except (socket.error, KeyError):
+                if peer in self.peers:
+                    del self.peers[peer]
 
     def _inputs(self):
-        print("\n* Your chats are encrypted.")
-
         while True:
             time.sleep(1/100)
             msg = input("> ")
