@@ -58,8 +58,8 @@ class encryption():
         cipher = [pow(char, publicKey, modulus) for char in ascii]
         return cipher
 
-    def decrypt(self, cipher, privateKey, modulus):
-        ascii = [pow(char, privateKey, modulus) for char in cipher]
+    def decrypt(self, cipher, privateKey):
+        ascii = [pow(char, privateKey, self.modulus) for char in cipher]
         msg = "".join(chr(char) for char in ascii)
         return msg
 
