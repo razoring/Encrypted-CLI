@@ -82,6 +82,8 @@ class encryption():
         
         self.privateKey = self._inverseMod(self.publicKey, phi_N)
 
+        return self.publicKey, self.publicKey
+
     def encrypt(self, msg, publicKey, modulus):
         ascii_chars = [ord(char) for char in msg]
         cipher = [pow(char, publicKey, modulus) for char in ascii_chars]
